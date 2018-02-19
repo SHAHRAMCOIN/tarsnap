@@ -65,6 +65,7 @@ struct siginfo_data {
 };
 
 static void		 siginfo_handler(int sig);
+static void		 siginfo_raisetotal(int64_t total);
 
 /* Handler for SIGINFO / SIGUSR1. */
 static void
@@ -121,6 +122,8 @@ siginfo_setinfo(struct bsdtar *bsdtar, const char * oper, const char * path,
 	bsdtar->siginfo->size = size;
 	bsdtar->siginfo->file_count = file_count;
 	bsdtar->siginfo->total_uncompressed = total_uncompressed;
+
+	siginfo_raisetotal(total_uncompressed);
 }
 
 void
@@ -221,4 +224,25 @@ siginfo_done(struct bsdtar *bsdtar)
 
 	/* Free internal data structure. */
 	free(bsdtar->siginfo);
+}
+
+/**
+ * siginfo_raisetotal(total):
+ * Look at how many bytes on disk have been processed since the last update,
+ * and trigger a siginfo_printinfo() if it exceeds tarsnap_opt_processbytes.
+ */
+static void
+siginfo_raisetotal(int64_t total)
+{
+	static uint64_t lastprogress = 0;
+
+	if (tarsnap_opt_progressbytes != (uint64_t)(-1)) {
+		if ((uint64_t)total > lastprogress +
+		    (uint64_t)tarsnap_opt_progressbytes) {
+			lastprogress = (uint64_t)total;
+
+			/* Fake a SIGINFO (no need for an actual signal). */
+			siginfo_received = 1;
+		}
+	}
 }

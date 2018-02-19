@@ -92,6 +92,7 @@ int tarsnap_opt_humanize_numbers = 0;
 int tarsnap_opt_noisy_warnings = 0;
 uint64_t tarsnap_opt_checkpointbytes = (uint64_t)(-1);
 uint64_t tarsnap_opt_maxbytesout = (uint64_t)(-1);
+uint64_t tarsnap_opt_progressbytes = (uint64_t)(-1);
 
 /* Structure for holding a delayed option. */
 struct delayedopt {
@@ -696,6 +697,9 @@ main(int argc, char **argv)
 			break;
 		case OPTION_PRINT_STATS: /* multitar */
 			bsdtar->option_print_stats = 1;
+			break;
+		case OPTION_PROGRESS_BYTES: /* tarsnap */
+			optq_push(bsdtar, "progress-bytes", bsdtar->optarg);
 			break;
 		case 'q': /* FreeBSD GNU tar --fast-read, NetBSD -q */
 			bsdtar->option_fast_read = 1;
@@ -1770,6 +1774,20 @@ dooption(struct bsdtar *bsdtar, const char * conf_opt,
 
 		bsdtar->option_print_stats = 1;
 		bsdtar->option_print_stats_set = 1;
+	} else if (strcmp(conf_opt, "progress-bytes") == 0) {
+		if (!((bsdtar->mode != 'c') || (bsdtar->mode != 'x')))
+			goto badmode;
+		if (tarsnap_opt_progressbytes != (uint64_t)(-1))
+			goto optset;
+		if (conf_arg == NULL)
+			goto needarg;
+
+		if (humansize_parse(conf_arg, &tarsnap_opt_progressbytes))
+			bsdtar_errc(bsdtar, 1, 0, "Cannot parse #bytes per "
+			    " progress message: %s", conf_arg);
+		if (tarsnap_opt_progressbytes < 1000)
+			bsdtar_errc(bsdtar, 1, 0, "progress-bytes value"
+			    " must be at least 1000");
 	} else if (strcmp(conf_opt, "quiet") == 0) {
 		if (bsdtar->option_quiet_set)
 			goto optset;

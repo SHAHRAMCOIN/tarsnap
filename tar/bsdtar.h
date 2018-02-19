@@ -251,6 +251,7 @@ enum {
 	OPTION_NUMERIC_OWNER,
 	OPTION_ONE_FILE_SYSTEM,
 	OPTION_PRINT_STATS,
+	OPTION_PROGRESS_BYTES,
 	OPTION_RECOVER,
 	OPTION_RECOVER_DELETE,	/* Operation mode, not a real option */
 	OPTION_RECOVER_WRITE,	/* Operation mode, not a real option */

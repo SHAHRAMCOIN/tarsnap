@@ -165,6 +165,7 @@ static struct option {
 	{ "totals",		  0, OPTION_TOTALS },
 	{ "unlink",		  0, 'U' },
 	{ "unlink-first",	  0, 'U' },
+	{ "progress-bytes",	  1, OPTION_PROGRESS_BYTES },
 	{ "verify-config",	  0, OPTION_VERIFY_CONFIG },
 	{ "verbose",              0, 'v' },
 	{ "version",              0, OPTION_VERSION },
