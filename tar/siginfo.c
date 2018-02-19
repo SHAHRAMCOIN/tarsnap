@@ -51,6 +51,12 @@ struct siginfo_data {
 	/* How large is the archive entry? */
 	int64_t size;
 
+	/* How many files in total? */
+	int file_count;
+
+	/* How many bytes have we handled in total? */
+	int64_t total_uncompressed;
+
 	/* Old signal handlers. */
 #ifdef SIGINFO
 	struct sigaction siginfo_old;
@@ -100,7 +106,7 @@ siginfo_init(struct bsdtar *bsdtar)
 
 void
 siginfo_setinfo(struct bsdtar *bsdtar, const char * oper, const char * path,
-    int64_t size)
+    int64_t size, int file_count, int64_t total_uncompressed)
 {
 
 	/* Free old operation and path strings. */
@@ -113,6 +119,8 @@ siginfo_setinfo(struct bsdtar *bsdtar, const char * oper, const char * path,
 	if ((bsdtar->siginfo->path = strdup(path)) == NULL)
 		bsdtar_errc(bsdtar, 1, errno, "Cannot strdup");
 	bsdtar->siginfo->size = size;
+	bsdtar->siginfo->file_count = file_count;
+	bsdtar->siginfo->total_uncompressed = total_uncompressed;
 }
 
 void
@@ -120,6 +128,7 @@ siginfo_printinfo(struct bsdtar *bsdtar, off_t progress)
 {
 	char * s_progress;
 	char * s_size;
+	char * s_total_uncompressed;
 
 	/* Sanity check. */
 	assert(progress >= 0);
@@ -154,6 +163,28 @@ siginfo_printinfo(struct bsdtar *bsdtar, off_t progress)
 				safe_fprintf(stderr, " (%ju / %" PRId64
 				    " bytes)", (uintmax_t)progress,
 				    bsdtar->siginfo->size);
+			}
+		}
+		fprintf(stderr, "\n");
+
+		/* Print overall progress (if applicable). */
+		if (bsdtar->siginfo->total_uncompressed > 0) {
+			if (tarsnap_opt_humanize_numbers) {
+				if ((s_total_uncompressed = humansize(
+				    (uint64_t)bsdtar->siginfo->total_uncompressed
+				    )) == NULL)
+					goto err0;
+				safe_fprintf(stderr, "Processed %zu files, %s",
+				    bsdtar->siginfo->file_count,
+				    s_total_uncompressed);
+
+				/* Clean up. */
+				free(s_total_uncompressed);
+			} else {
+				safe_fprintf(stderr,
+				    "Processed %zu files, %" PRId64 " bytes",
+				    bsdtar->siginfo->file_count,
+				    bsdtar->siginfo->total_uncompressed);
 			}
 		}
 		if (!bsdtar->verbose)
