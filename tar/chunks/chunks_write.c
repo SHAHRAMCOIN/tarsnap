@@ -309,6 +309,18 @@ err0:
 }
 
 /**
+ * FIXME
+ */
+uint64_t
+chunks_write_newzbytes(CHUNKS_W * C)
+{
+
+	return (C->stats_new.s_zlen + C->stats_extra.s_zlen
+	    + STORAGE_FILE_OVERHEAD *
+	    (C->stats_new.nchunks + C->stats_extra.nchunks));
+}
+
+/**
  * chunks_write_checkpoint(C):
  * Create a checkpoint for the write transaction associated with the cookie
  * ${C}.

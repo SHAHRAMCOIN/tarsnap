@@ -95,6 +95,11 @@ void chunks_write_extrastats_copy(CHUNKS_W *, size_t);
 int chunks_write_printstats(FILE *, CHUNKS_W *, int);
 
 /**
+ * FIXME
+ */
+uint64_t chunks_write_newzbytes(CHUNKS_W * C);
+
+/**
  * chunks_write_checkpoint(C):
  * Create a checkpoint for the write transaction associated with the cookie
  * ${C}.

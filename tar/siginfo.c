@@ -35,11 +35,14 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/siginfo.c,v 1.2 2008/05/22 21:08:36 cperciva
 #include <string.h>
 
 #include "bsdtar.h"
+#include "chunks.h"
 #include "humansize.h"
 #include "tarsnap_opt.h"
 
 /* Is there a pending SIGINFO or SIGUSR1? */
 static volatile sig_atomic_t siginfo_received = 0;
+
+static CHUNKS_W * chunks_write_cookie = NULL;
 
 struct siginfo_data {
 	/* What sort of operation are we doing? */
@@ -106,6 +109,13 @@ siginfo_init(struct bsdtar *bsdtar)
 }
 
 void
+siginfo_setchunks(void * cookie)
+{
+
+	chunks_write_cookie = cookie;
+}
+
+void
 siginfo_setinfo(struct bsdtar *bsdtar, const char * oper, const char * path,
     int64_t size, int file_count, int64_t total_uncompressed)
 {
@@ -132,6 +142,7 @@ siginfo_printinfo(struct bsdtar *bsdtar, off_t progress)
 	char * s_progress;
 	char * s_size;
 	char * s_total_uncompressed;
+	char * s_total_new;
 
 	/* Sanity check. */
 	assert(progress >= 0);
@@ -190,6 +201,26 @@ siginfo_printinfo(struct bsdtar *bsdtar, off_t progress)
 				    bsdtar->siginfo->total_uncompressed);
 			}
 		}
+		/* Print new data (if applicable). */
+		if (chunks_write_cookie != NULL) {
+			if (tarsnap_opt_humanize_numbers) {
+				if ((s_total_new = humansize(
+				    chunks_write_newzbytes(chunks_write_cookie)
+				    )) == NULL)
+					goto err0;
+				safe_fprintf(stderr, "; New data: %s ",
+				    s_total_new);
+
+				/* Clean up. */
+				free(s_total_new);
+			} else {
+				safe_fprintf(stderr, "; New data %" PRId64
+				    " bytes",
+				    chunks_write_newzbytes(chunks_write_cookie)
+				    );
+			}
+		}
+
 		if (!bsdtar->verbose)
 			fprintf(stderr, "\n");
 		siginfo_received = 0;

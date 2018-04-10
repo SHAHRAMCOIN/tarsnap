@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "asprintf.h"
+#include "bsdtar.h"
 #include "chunkify.h"
 #include "chunks.h"
 #include "crypto.h"
@@ -481,6 +482,9 @@ writetape_open(uint64_t machinenum, const char * cachedir,
 	/* Obtain a write cookie from the chunk layer. */
 	if ((d->C = chunks_write_start(cachedir, d->S, MAXCHUNK)) == NULL)
 		goto err5;
+
+	/* Pass write cookie to siginfo. */
+	siginfo_setchunks(d->C);
 
 	/*
 	 * Make sure that there isn't an archive already present with either
