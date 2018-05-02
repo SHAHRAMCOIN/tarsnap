@@ -38,6 +38,7 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.27 2
 #include <string.h>
 #endif
 
+#include <errno.h>
 #include "archive.h"
 #include "archive_entry.h"
 #include "archive_private.h"
